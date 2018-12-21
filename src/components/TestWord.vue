@@ -18,7 +18,6 @@
       <el-tab-pane label="添加" name="first">
       <el-button @click="addLine">添加行数</el-button>
       <el-button @click="save('formDom')">baocun</el-button>
-
         <el-form :rules="formData.rules" :model="formData"  ref="formDom" class="demo-ruleForm">
         <el-table
           :data="formData.tableData"
@@ -46,7 +45,7 @@
           </el-table-column>
           <el-table-column prop="bookborrower" label="借阅者">
              <template slot-scope="scope">
-               <el-form-item :prop="'tableData.' + scope.$index + '.bookborrower'" :rules='formData.rules.name'>
+               <el-form-item :prop="'tableData.' + scope.$index + '.bookborrower'" :rules='formData.rules.name2'>
                    <el-input v-model="scope.row.bookborrower" placeholder="借阅者"></el-input>
                </el-form-item>
              </template>
@@ -57,9 +56,10 @@
                  <el-date-picker
                    v-model="scope.row.bookbuytime"
                    type="date"
+                   value-format="yyyy-MM-dd"
+                   format="yyyy-MM-dd"
                    placeholder="购买日期">
                  </el-date-picker>
-
                </el-form-item>
              </template>
           </el-table-column>
@@ -121,6 +121,7 @@
                  <el-date-picker
                    v-model="scope.row.bookbuytime"
                    type="date"
+                   format="yyyy-MM-dd"
                    value-format="yyyy-MM-dd"
                    placeholder="购买日期">
                  </el-date-picker>
@@ -193,8 +194,9 @@ export default {
       formData:{
           rules:{
                     name:{ type:"string",required:true,message:"必填字段",trigger:"blur"},
+                    name2:{ type:"string",message:"必填字段",trigger:"blur"},
                     volume1:{ type:"number",required:true,message:"册数必须为数字值",trigger:"change"},
-                    data1:{ type:"date",required:true,message:"请选择日期",trigger:"change"}
+                    data1:{required:true,message:"请选择日期",trigger:"change"}
                 },
           tableData:[{
                     bookname: '',
@@ -252,17 +254,16 @@ export default {
     getData(){
     this.$ajax({
         method: 'get',
-        url:'../static/json/1.1.1.json', //<---本地地址
-        //url: '/api/drummer/8bd17859',
+      //  url:'../static/json/1.1.1.json', //<---本地地址
+        url:'http://localhost:3030/getlist',
       }).then((response)=>{
-        console.log(JSON.stringify(response.data))
-
-        let _data = response.data;
-        let datalength = _data.length;
-        for(let i = 0;i < datalength; i++){
-           this.$set(_data[i], 'editing', false)
-        }
-        this.modifyData = _data;
+      //  console.log(JSON.stringify(response.data))
+      //  let _data = response.data;
+      //  let datalength = _data.length;
+      //  for(let i = 0;i < datalength; i++){
+      //     this.$set(_data[i], 'editing', false)
+        //}
+      //  this.modifyData = _data;
       }).catch(function(err){
           console.log(err)
       })
@@ -271,16 +272,16 @@ export default {
       console.log(key, keyPath);
     },
     addLine(){ //添加行数
-    var newValue = {
-      bookname: '',
-      bookbuytime: '',
-      bookbuyer: '',
-      bookborrower: '',
-      bookvolume:''
-      };
+      var newValue = {
+        bookname: '',
+        bookbuytime: '',
+        bookbuyer: '',
+        bookborrower: '',
+        bookvolume:''
+        };
 
       this.formData.tableData.push(newValue);
-        console.log(this.formData.tableData)
+     console.log(this.formData.tableData)
       console.log("ni hao")
 
     },
@@ -289,16 +290,27 @@ export default {
       this.formData.tableData.splice(index, 1)
     },
     save(formName){
-    this.$refs[formName].validate((valid,model) => {
-    console.log(valid)
-    console.log(JSON.stringify(model))
-    if (valid) {
-      alert('submit!');
-    } else {
-      console.log('error submit!!');
-      return false;
-    }
-  });
+      this.$refs[formName].validate((valid,model) => {
+        let postData = this.formData.tableData
+        console.log(JSON.stringify(postData))
+        if (valid) {
+          let postData = this.formData.tableData
+          this.$ajax({
+              method: 'post',
+              url:'http://localhost:3030/addBookData',
+              params:{
+                ...postData
+              }
+            }).then((response)=>{
+              console.log("sa")
+            }).catch(function(err){
+                console.log(err)
+        })
+      } else {
+        console.log('error submit!!');
+        return false;
+      }
+      });
     },
     handleEdit(index,row){
       row.editing = true;

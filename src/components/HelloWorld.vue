@@ -15,36 +15,50 @@
       </div>
     </div>
     <div class="filter-condition">
-      <el-select v-model="value" placeholder="请选择">
-        <el-option
-          v-for="item in options"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
-      </el-select>
-      <el-input
-        placeholder="请输入购买者"
-        v-model="input10"
-        clearable>
-      </el-input>
-      <el-input
-        placeholder="请输入书名关键字"
-        v-model="input10"
-        clearable>
-      </el-input>
-      <el-button>搜索</el-button>
+      <el-form :inline="true" :model="formInline" ref="formInline" class="demo-form-inline">
+        <el-form-item>
+          <el-select v-model="formInline.state" placeholder="请选择">
+             <el-option label="在录" value="在录"></el-option>
+             <el-option label="过期" value="过期"></el-option>
+             <el-option label="未过期" value="为过期"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-input
+            placeholder="请输入购买者"
+            v-model="formInline.writebuyer"
+            clearable>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-input
+            placeholder="请输入书名关键字"
+            v-model="formInline.writebookname"
+            clearable>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button @click="searchInfor">搜索</el-button>
+        </el-form-item>
+      </el-form>
       <router-link class="el-button el-button--edit" to="/test">编 辑</router-link>
       <el-table
-        :data="tableData"
+        v-loading="loading"
+        :data="tableData.slice((currpage - 1) * pagesize, currpage * pagesize)"
         border
         style="width: 100%">
         <el-table-column
+         type="index"
+         label="序号"
+         align="center"
+         width="50px"
+        >
+        </el-table-column>
+        <el-table-column
           prop="bookname"
           label="书名"
-          min-width="50%"
+          min-width="49%"
           >
-
         </el-table-column>
         <el-table-column
           prop="bookvolume"
@@ -67,11 +81,15 @@
           min-width="14%">
         </el-table-column>
       </el-table>
-      <el-pagination
-        background
-        layout="prev, pager, next"
-        :total="1000">
-      </el-pagination>
+      <el-pagination background
+  			layout="prev, pager, next, sizes, total, jumper"
+  			:page-sizes="[5, 10, 15, 20]"
+  			:page-size="pagesize"
+  			:total="tableData.length"
+  			@current-change="handleCurrentChange"
+  			@size-change="handleSizeChange"
+  			>
+  		</el-pagination>
     </div>
   </div>
 </template>
@@ -82,46 +100,72 @@ export default {
   data () {
     return {
       activeIndex2: '1',
-      options: [{
-          value: '选项1',
-          label: '在录'
-        }, {
-          value: '选项2',
-          label: '未过期'
-        }, {
-          value: '选项3',
-          label: '过期'
-        }],
+      formInline: {
+        state:'在录',
+        writebuyer:'',
+        writebookname:''
+      },
+      pagesize: 10,
+currpage: 1,
+      loading: false,
       value: '选项1',
       input10: '',
-      tableData: [{
-          bookname: '普通高等教育物联网工程专业规划用书：物联网技术概论',
-          bookbuytime: '2016-05-02',
-          bookbuyer: '王小虎',
-          bookborrower: '李晓月',
-          bookvolume:'1'
-        }, {
-          bookname: '普通高等教育物联网工程专业规划用书：物联网技术概论',
-          bookbuytime: '2016-05-02',
-          bookbuyer: '王小虎',
-          bookborrower: '李晓月',
-          bookvolume:'1'
-        }, {
-          bookname: '普通高等教育物联网工程专业规划用书：物联网技术概论',
-          bookbuytime: '2016-05-02',
-          bookbuyer: '王小虎',
-          bookborrower: '李晓月',
-          bookvolume:'1'
-        }, {
-          bookname: '普通高等教育物联网工程专业规划用书：物联网技术概论',
-          bookbuytime: '2016-05-02',
-          bookbuyer: '王小虎',
-          bookborrower: '李晓月',
-          bookvolume:'1'
-        }]
+      tableData: []
     }
   },
+  mounted(){
+    this.getBookData()
+  },
   methods: {
+    getBookData(){
+      this.loading = true;
+      this.$ajax({
+        method: 'get',
+      //  url:'../static/json/1.1.1.json', //<---本地地址
+        url:'http://localhost:3030/getList'
+      }).then((response)=>{
+        console.log(JSON.stringify(response.data))
+        let _data = response.data;
+      //  let datalength = _data.length;
+      //  for(let i = 0;i < datalength; i++){
+      //     this.$set(_data[i], 'editing', false)
+        //}
+        this.tableData = _data;
+        this.loading = false;
+      }).catch(function(err){
+          console.log(err)
+      })
+    },
+    searchInfor(){
+      console.log(JSON.stringify(this.formInline))
+      let postData = this.formInline;
+      this.loading = true;
+      this.$ajax({
+        method: 'get',
+      //  url:'../static/json/1.1.1.json', //<---本地地址
+        url:'http://localhost:3030/getList',
+        params:{
+          ...postData
+        }
+      }).then((response)=>{
+        console.log(JSON.stringify(response.data))
+        let _data = response.data;
+      //  let datalength = _data.length;
+      //  for(let i = 0;i < datalength; i++){
+      //     this.$set(_data[i], 'editing', false)
+        //}
+        this.tableData = _data;
+        this.loading = false;
+      }).catch(function(err){
+          console.log(err)
+      })
+    },
+		handleCurrentChange(cpage) {
+			this.currpage = cpage;
+		},
+		handleSizeChange(psize) {
+			this.pagesize = psize;
+		},
     handleSelect(key, keyPath) {
       console.log(key, keyPath);
     }
